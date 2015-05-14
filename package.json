@@ -1,0 +1,9 @@
+{
+  "name": "cdjsocketio",
+  "version": "0.0.1",
+  "description": "Async updates for users within rooms",
+  "dependencies": {
+    "express": "^4.10.2",
+    "socket.io": "^1.3.5"
+  }
+}
