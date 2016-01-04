@@ -9,14 +9,14 @@ var server = require('http').createServer(app);
 var io = require("socket.io").listen(server);
 
 var port = process.env.OPENSHIFT_NODEJS_PORT || 3000;
-var ip = process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1";
+var ip = process.env.OPENSHIFT_NODEJS_IP || "192.168.2.4";
 
-server.listen(port, ip, function(){
+server.listen(port, ip, function() {
 	console.log('Server listening on ip ' + ip + ' port ' + port);
 	console.log();
 });
 
-app.get('/', function(req, res){
+app.get('/', function(req, res) {
 	res.sendFile(__dirname + '/index.html');
 });
 
@@ -31,12 +31,12 @@ io.on('connection', function(socket) {
 		var uid = data['uid'], rid = data['rid'];
 
 		var user = users[socket.id];
-		if (user === undefined) {
+		if (user === undefined) { // No sio user 
 			console.log('Creating new user ' + uid + ' sid ' + socket.id);
 			users[socket.id] = new User(uid); // Add to users list
 			sockets.push(socket); // Add to sockets list
 			user = users[socket.id];
-		} else {
+		} else { // Sio user exists
 			if (user.id != uid)
 				console.log('WARNING: uid does not match on sid' + socket.id);
 			if (user.inroom !== undefined) { // Leave existing room
@@ -57,10 +57,11 @@ io.on('connection', function(socket) {
 			console.log('User ' + uid + ' already in room ' + rid);
 		} else {
 			room.members.push(uid); // Add user to cdj room
-			socket.join(socket.room); // Add user to sio room
-			user.inroom = rid;
 			console.log('User ' + uid + ' joined room ' + rid);
 		}
+
+		socket.join(rid); // Add user to sio room
+		user.inroom = rid;
 
 		console.log(room);
 
@@ -68,17 +69,18 @@ io.on('connection', function(socket) {
 	});
 
 	// Detailed updates for when user is looking at room data
-	socket.on('update0', function(data) {
-		var rid = data['rid']
-		console.log('Broadcasting action:' + data['action'] + ' to room ' + rid);
-		io.in(rid).emit('update0', data);
-	});
+	socket.on('update', function(data) {
+		var rid = data['rid'];
+		var sid = data['SongId']
+		var action = data['action'];
+		
+		console.log('Broadcasting action:' + data['action'] + ' to room ' + rid + ' song ' + sid);
+		console.log(data);
+		console.log('Sending to users ' + io.in(rid))
+		
+		io.in(rid).emit('update', data);
 
-	// Updates that always occur
-	socket.on('update1', function(data) {
-		var rid = data['rid']
-		console.log('Broadcasting action:' + data['action'] + ' to room ' + rid);
-		io.in(rid).emit('update1', data);
+		updateRoom(data)
 	});
 
 	socket.on('leaveroom', function(data) {
@@ -92,6 +94,7 @@ io.on('connection', function(socket) {
 	});
 
 	socket.on('disconnect', function() {
+		console.log('User disconnected sid ' + socket.id);
 		delete users[socket.id];
 	});
 	
@@ -121,4 +124,14 @@ function leaveRoom(uid, rid, socket) {
 
 	room.members.splice(uindex, 1);
 	socket.leave(rid);
+}
+
+function updateRoom(data) {
+	switch(data['action']) {
+		case 'deleteSong':
+			var r = rooms[data['rid']]
+			if (r === undefined) {
+				return "Room does not exist"	
+			}
+	}	
 }

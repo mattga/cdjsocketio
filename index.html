@@ -6,4 +6,12 @@
   // socket.emit('update0', { rid:24, action:'songadded', SongId:18 });
   //socket.emit('logall');
   // socket.emit('leaveroom', { uid : 3, rid : 4 });
+  // socket.emit('update0', { rid:24, action:'addsong', SongId:18, SourceId:"WIXtMEFePcg", Title:"TEST", Artist:"TEST", Album:"TEST",Thumbnail:"",Length:300,PublishedDate:"/Date(1431741601000-0500)/",Source:"YT",Tokens:"10"});
+
+  socket.on('update1', function(data) {
+  	var dtokens = data['change'];
+	var rid = data['rid']
+	document.write('Update tokens by ' + dtokens + ' for all users in ' + rid + '<br>');
+  });
+
 </script>
